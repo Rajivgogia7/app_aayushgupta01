@@ -11,7 +11,7 @@ namespace XUnitTestProject1
         private readonly ILogger<HomeController> _logger;
 
         [Fact]
-        public void Test1()
+        public void Test_GetAllBooks()
         {
             var controller = new HomeController(_logger);
 
@@ -19,7 +19,7 @@ namespace XUnitTestProject1
             var data = controller.Book();
 
             //Assert  
-            Assert.IsType<OkObjectResult>(data);
+            Assert.NotNull(data);
         }
     }
 }
