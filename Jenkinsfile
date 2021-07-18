@@ -57,19 +57,19 @@ pipeline {
       }
      
   }
-  stage('Push image to docker hub') {
+    stage('Docker deployment')
+    {
+        steps{
+            bat "docker run --name c-${username}-master -d -p 7100:80 i-${username}-master"
+        }
+    }
+    stage('Push image to docker hub') {
       steps {
           bat "docker tag i-${username}-master ${registry}:$BUILD_NUMBER"
             withDockerRegistry(credentialsId: 'DockerHub', url: '') {
                 bat "docker push ${registry}:$BUILD_NUMBER"
         }
       }
-    }
-    stage('Docker deployment')
-    {
-        steps{
-            bat "docker run --name c-${username}-master -d -p 7100:80 ${registry}:$BUILD_NUMBER"
-        }
     }
   }  
  }
