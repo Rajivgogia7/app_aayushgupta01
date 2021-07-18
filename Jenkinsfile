@@ -71,5 +71,12 @@ pipeline {
         }
       }
     }
+
   }  
+  post{
+        always {
+            echo "Test Report Generation Step"
+            xunit([MSTest(deleteOutputFiles: true, failIfNotNew: true, pattern: 'test-project\\TestResults\\TestFileReport.xml', skipNoTestFiles: true)])
+        }
+    }
  }
