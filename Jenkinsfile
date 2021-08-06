@@ -11,7 +11,7 @@ pipeline {
  stages {
   stage('Checkout') {
    steps {
-    git  url: 'https://github.com/Aayush-gupta10/DevopsWebApp.git'
+    git  url: 'https://github.com/Aayush-gupta10/app_aayushgupta01.git'
    }
   }
   stage('Start SonarQube Analysis')
