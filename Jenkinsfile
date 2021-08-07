@@ -58,8 +58,7 @@ pipeline {
         stage('Containers') {
             steps {
                 parallel{
-                    "Pre container check":
-                    {
+                    PrecontainerCheck:{
                         bat'''
                         for id in $(docker ps -q)
                         do
@@ -70,8 +69,7 @@ pipeline {
                         done
                         '''
                     },
-                    "Push to docker hub":
-                    {
+                    PushtoDockerHub:{
                         withDockerRegistry(credentialsId: 'DockerHub', url: '') {
                             bat "docker push ${registry}:$BUILD_NUMBER"
                             bat "docker push ${registry}:latest"
