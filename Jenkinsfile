@@ -65,7 +65,7 @@ pipeline {
                         If NOT "%containerId%" == "" (
                         for /f %%i in ('docker.exe inspect --format="{{(index (index .NetworkSettings.Ports \"80/tcp\") 0).HostPort}}" %containerId%') do set port=%%i
                         echo %port%
-                        If %port% == 7300(
+                        If "%port%" == "7300"(
                         docker stop %ContainerId%
                         docker rm -f %ContainerId%
                         )
