@@ -55,12 +55,28 @@ pipeline {
             }
 
         }
-        stage('Publish to docker hub') {
+        stage('Containers') {
             steps {
-                withDockerRegistry(credentialsId: 'DockerHub', url: '') {
-                    bat "docker push ${registry}:$BUILD_NUMBER"
-                    bat "docker push ${registry}:latest"
-                }
+                parallel(
+                    PrecontainerCheck:{
+                        bat'''
+                        #!/usr/bin/env bash
+                        for id in $(docker ps -q)
+                        do
+                            if [[ $(docker port "${id}") == *"7200"* ]]; then
+                                echo "stopping container ${id}"
+                                docker stop "${id}"
+                            fi
+                        done
+                        '''
+                    },
+                    PushtoDockerHub:{
+                        withDockerRegistry(credentialsId: 'DockerHub', url: '') {
+                            bat "docker push ${registry}:$BUILD_NUMBER"
+                            bat "docker push ${registry}:latest"
+                        }
+                    }
+                )
             }
         }
         stage('Docker deployment') {
