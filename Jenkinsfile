@@ -62,11 +62,10 @@ pipeline {
                         bat'''
                         for /f %%i in ('docker ps -q') do set containerId=%%i
                         echo %containerId%
-                        If "%containerId%" == "" (
-                          echo "No Container running"
-                        ) ELSE (
-                          docker stop %ContainerId%
-                          docker rm -f %ContainerId%
+                        If ('docker port %containerId%') == 7300(
+                        echo "hello"
+                        docker stop %ContainerId%
+                        docker rm -f %ContainerId%
                         )
                         '''
                     },
