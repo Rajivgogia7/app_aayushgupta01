@@ -60,20 +60,15 @@ pipeline {
                 parallel(
                     PrecontainerCheck:{
                         bat'''
-                        for /f %%i in ('docker ps -q') do set containerId=%%i
+                        ffor /f %%i in ('docker ps -f "publish=7300" -q') do set containerId=%%i
                         echo %containerId%
                         If NOT "%containerId%" == "" (
-                        for /f %%i in ('docker.exe inspect --format="{{(index (index .NetworkSettings.Ports \"80/tcp\") 0).HostPort}}" %containerId%') do set port=%%i
-                        echo %port%
-                        If %port% EQU 7300 (
-                        docker stop %ContainerId%
-                        docker rm -f %ContainerId%
-                        )
-                        ELSE(
-                            echo "Container is not running on 7300"
-                        )
-                        )
-                        ELSE(echo "No container is running")
+					docker stop %containerId%
+					docker rm -f %containerId%
+				)
+				ELSE(
+					echo "Container is not running on 7300"
+				)
                         '''
                     },
                     PushtoDockerHub:{
