@@ -57,7 +57,7 @@ pipeline {
         }
         stage('Containers') {
             steps {
-                parallel{
+                parallel(
                     PrecontainerCheck:{
                         bat'''
                         for id in $(docker ps -q)
@@ -75,7 +75,7 @@ pipeline {
                             bat "docker push ${registry}:latest"
                         }
                     }
-                }
+                )
             }
         }
         stage('Docker deployment') {
