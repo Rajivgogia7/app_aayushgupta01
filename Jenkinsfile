@@ -14,8 +14,16 @@ pipeline {
     git  url: 'https://github.com/Aayush-gupta10/app_aayushgupta01.git'
    }
   }
-  stage('Start SonarQube Analysis')
+  stage('nuget restore') {
+   steps {
+    bat "dotnet restore"
+   }
+  }
+  stage('start sonarqube analysis')
   {
+    when {
+     branch 'master'
+    }
     steps{
         withSonarQubeEnv('Test_Sonar') {
             bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 -d:sonar.cs.opencover.reportsPaths='XUnitTestProject1/TestResults/*/coverage.*.xml' -d:sonar.cs.xunit.reportsPaths='XUnitTestProject1/TestResults/devopsassignmenttestoutput.xml'"
@@ -23,47 +31,33 @@ pipeline {
     }
       
   }
-  stage('Restore PACKAGES') {
-   steps {
-    bat "dotnet restore"
-   }
-  }
-  stage('Clean') {
-   steps {
-    bat 'dotnet clean'
-   }
-  }
   stage('Build') {
    steps {
+    bat 'dotnet clean'
     bat 'dotnet build -c Release -o DevopsWebApp/app/build'
+    bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
    }
  }
- stage('Test: Unit Test'){
-   steps {
-     bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
-     }
-  }
- stage('Stop SonarQube analysis') {
+ stage('stop sonarqube analysis') {
+  when {
+     branch 'master'
+    }
     steps{
         withSonarQubeEnv('Test_Sonar') {
             bat "${scannerHome}\\SonarScanner.MSBuild.exe end"
         }
     }
  }
-  stage('Create docker image')
+  stage('Docker image')
   {
       steps{
-           bat "docker build -t i-${username}-master ."
+       bat "docker build -t i-${username}-$env.BRANCH_NAME ."
+       bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}:$BUILD_NUMBER"
+       bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}:latest"
       }
      
   }
-    stage('Docker deployment')
-    {
-        steps{
-            bat "docker run --name c-${username}-master -d -p 7100:80 i-${username}-master"
-        }
-    }
-    stage('Push image to docker hub') {
+  stage('Publish to docker hub') {
       steps {
           bat "docker tag i-${username}-master ${registry}:$BUILD_NUMBER"
             withDockerRegistry(credentialsId: 'DockerHub', url: '') {
@@ -71,7 +65,23 @@ pipeline {
         }
       }
     }
-
+    stage('Docker deployment')
+    {
+        steps{
+         script{
+          if(env.BRANCH_NAME=='master'){
+                bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p 7200:80 ${registry}:latest"
+            }else if(env.BRANCH_NAME=='develop'){
+                bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p 7300:80 ${registry}:latest"
+            }
+         }
+        }
+     stage('Kubernetes Deployment') {
+       steps {
+		  bat "kubectl apply -f deployment.yaml"
+       }
+    }
+    }
   }  
   post{
         always {
