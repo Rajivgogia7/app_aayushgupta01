@@ -60,6 +60,7 @@ pipeline {
                 parallel(
                     PrecontainerCheck:{
                         bat'''
+                        !/usr/bin/env bash
                         for %%id in $(docker ps -q)
                         do
                             if [[ $(docker port "${id}") == *"7200"* ]]; then
