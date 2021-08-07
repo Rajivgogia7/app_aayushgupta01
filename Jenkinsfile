@@ -60,13 +60,14 @@ pipeline {
                 parallel(
                     PrecontainerCheck:{
                         bat'''
-                        for (id in $(docker ps -q))
-                        do
-                            if [[ $(docker port "${id}") == *"7200"* ]]; then
-                                echo "stopping container ${id}"
-                                docker stop "${id}"
-                            fi
-                        done
+                        for /f %%i in ('docker ps -q') do set containerId=%%i
+                        echo %containerId%
+                        If "%containerId%" == "" (
+                          echo "No Container running"
+                        ) ELSE (
+                          docker stop %ContainerId%
+                          docker rm -f %ContainerId%
+                        )
                         '''
                     },
                     PushtoDockerHub:{
