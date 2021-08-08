@@ -3,7 +3,7 @@ pipeline {
     environment {
         scannerHome = tool name: 'sonar_scanner_dotnet'
         username = 'aayushgupta01'
-        registry = 'aayushgup10/nagpdevopsassignment'
+        registry = 'aayushgup10/'
     }
     tools {
         msbuild 'MSBuild'
@@ -26,7 +26,6 @@ pipeline {
             steps {
                 withSonarQubeEnv('Test_Sonar') {
                     bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 -d:sonar.cs.opencover.reportsPaths=XUnitTestProject1/coverage.opencover.xml -d:sonar.cs.xunit.reportsPaths='XUnitTestProject1/TestResults/devopsassignmenttestoutput.xml'"
-                    //bat "${scannerHome}/SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 /d:sonar.cs.opencover.reportsPaths=XUnitTestProject1/coverage.opencover.xml /d:sonar.coverage.exclusions='**Test*.cs'"
            
                 }
             }
@@ -36,7 +35,6 @@ pipeline {
             steps {
                 bat 'dotnet clean'
                 bat 'dotnet build -c Release -o DevopsWebApp/app/build'
-                //bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
                 bat 'dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover -l:trx;LogFileName=devopsassignmenttestoutput.xml'
             }
         }
@@ -61,8 +59,8 @@ pipeline {
         stage('Docker image') {
             steps {
                 bat "docker build -t i-${username}-$env.BRANCH_NAME ."
-                bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}:$BUILD_NUMBER"
-                bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}:latest"
+                bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}$env.BRANCH_NAME:$BUILD_NUMBER"
+                bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}$env.BRANCH_NAME:latest"
             }
 
         }
@@ -76,7 +74,7 @@ pipeline {
                             } else {
                                 env.port = 7300
                             }
-                            env.containerId = bat(script: "docker ps -f publish=${port} -q", returnStdout: true).trim().readLines().drop(1).join('')
+                            env.containerId = bat(script: "docker ps -a -f publish=${port} -q", returnStdout: true).trim().readLines().drop(1).join('')
                             if (env.containerId != '') {
                                 echo "Stopping and removing container running on ${port}"
                                 bat "docker stop $env.containerId"
@@ -88,8 +86,8 @@ pipeline {
                     },
                     PushtoDockerHub: {
                         withDockerRegistry(credentialsId: 'DockerHub', url: '') {
-                            bat "docker push ${registry}:$BUILD_NUMBER"
-                            bat "docker push ${registry}:latest"
+                            bat "docker push ${registry}$env.BRANCH_NAME:$BUILD_NUMBER"
+                            bat "docker push ${registry}$env.BRANCH_NAME:latest"
                         }
                     }
                 )
@@ -98,13 +96,13 @@ pipeline {
         stage('Docker deployment') {
             steps {
                 script {
-                    bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
+                    bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}$env.BRANCH_NAME:latest"
                 }
             }
         }
         stage('Kubernetes Deployment') {
             steps {
-                bat "kubectl apply -f deployment.yaml"
+                bat "kubectl apply -f deployment.yaml --namespace=kubernetes-cluster-${username}"
             }
         }
     }
