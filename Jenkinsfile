@@ -47,6 +47,14 @@ pipeline {
                 }
             }
         }
+        stage('Release artifact') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                bat 'dotnet publish -c Release'
+            }
+        }
         stage('Docker image') {
             steps {
                 bat "docker build -t i-${username}-$env.BRANCH_NAME ."
@@ -58,19 +66,24 @@ pipeline {
         stage('Containers') {
             steps {
                 parallel(
-                    PrecontainerCheck:{
-                        bat'''
-                        #!/usr/bin/env bash
-                        for id in $(docker ps -q)
-                        do
-                            if [[ $(docker port "${id}") == *"7200"* ]]; then
-                                echo "stopping container ${id}"
-                                docker stop "${id}"
-                            fi
-                        done
-                        '''
+                    "Precontainer Check": {
+                        script {
+                            if (env.BRANCH_NAME == 'master') {
+                                env.port = 7200
+                            } else {
+                                env.port = 7300
+                            }
+                            env.containerId = bat(script: "docker ps -f publish=${port} -q", returnStdout: true).trim().readLines().drop(1).join('')
+                            if (env.containerId != '') {
+                                echo "Stopping and removing container running on ${port}"
+                                bat "docker stop $env.containerId"
+                                bat "docker rm $env.containerId"
+                            } else {
+                                echo "No container running on ${port}  port."
+                            }
+                        }
                     },
-                    PushtoDockerHub:{
+                    PushtoDockerHub: {
                         withDockerRegistry(credentialsId: 'DockerHub', url: '') {
                             bat "docker push ${registry}:$BUILD_NUMBER"
                             bat "docker push ${registry}:latest"
@@ -82,11 +95,7 @@ pipeline {
         stage('Docker deployment') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
-                        bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p 7200:80 ${registry}:latest"
-                    } else if (env.BRANCH_NAME == 'develop') {
-                        bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p 7300:80 ${registry}:latest"
-                    }
+                    bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
                 }
             }
         }
