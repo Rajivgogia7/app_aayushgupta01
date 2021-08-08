@@ -38,7 +38,7 @@ pipeline {
                 bat 'dotnet build -c Release -o DevopsWebApp/app/build'
                 //bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
                 //bat 'dotnet test XUnitTestProject1\\XUnitTestProject1.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=opencover'
-                bat 'dotnet test --logger "trx;LogFileName=XUnitTestProject1.Results.trx" --no-build --collect "Code Coverage"'
+                bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --logger "trx;LogFileName=XUnitTestProject1.Results.trx" --no-build --collect "Code Coverage"'
                 powershell "CodeCoverage.exe analyze /output:${WORKSPACE}\\XUnitTestProject1.Tests\\XUnitTestProject1.Coverage.coveragexml (Get-ChildItem ${WORKSPACE} -Recurse -Filter '*.coverage')[0].FullName"
                 mstest testResultsFile:"**/*.trx", keepLongStdio: true
             }
