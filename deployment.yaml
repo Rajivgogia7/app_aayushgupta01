@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: dotnet-app-develop
-          image: aayushgup10/nagpdevopsassignment:latest
+          image: aayushgup10/master:latest
           ports:
             - name: http
               containerPort: 80
