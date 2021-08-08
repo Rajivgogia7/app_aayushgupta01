@@ -98,10 +98,11 @@ pipeline {
                     bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
                 }
             }
-    }
-    stage('Kubernetes Deployment') {
-        steps {
-            bat "kubectl apply -f deployment.yaml"
+        }
+        stage('Kubernetes Deployment') {
+            steps {
+                bat "kubectl apply -f deployment.yaml"
+            }
         }
     }
 }
