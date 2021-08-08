@@ -37,7 +37,7 @@ pipeline {
                 bat 'dotnet clean'
                 bat 'dotnet build -c Release -o DevopsWebApp/app/build'
                 //bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
-                bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover -l:trx;LogFileName=devopsassignmenttestoutput.xml'
+                bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura -l:trx;LogFileName=devopsassignmenttestoutput.xml'
             }
         }
         stage('stop sonarqube analysis') {
