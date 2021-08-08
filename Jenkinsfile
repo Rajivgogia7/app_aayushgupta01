@@ -98,7 +98,6 @@ pipeline {
                     bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
                 }
             }
-        }
     }
     stage('Kubernetes Deployment') {
         steps {
