@@ -47,7 +47,7 @@ pipeline {
                 }
             }
         }
-	stage('Release artifact') {
+        stage('Release artifact') {
             when {
                 branch 'develop'
             }
@@ -66,24 +66,24 @@ pipeline {
         stage('Containers') {
             steps {
                 parallel(
-                    "Precontainer Check":{
-			    script {
-				if (env.BRANCH_NAME == 'master') {
-					env.port = 7200
-				} else {
-					env.port = 7300
-				}
-				env.containerId = bat(script:"docker ps -f publish=${port} -q", returnStdout: true).trim().readLines().drop(1).join('')
-				if (env.containerId != '') {
-					echo "Stopping and removing container running on ${port}"
-				    bat "docker stop $env.containerId" 
-				    bat "docker rm $env.containerId"
-				} else {
-					echo "No container running on ${port}  port."
-				}
-			    }
+                    "Precontainer Check": {
+                        script {
+                            if (env.BRANCH_NAME == 'master') {
+                                env.port = 7200
+                            } else {
+                                env.port = 7300
+                            }
+                            env.containerId = bat(script: "docker ps -f publish=${port} -q", returnStdout: true).trim().readLines().drop(1).join('')
+                            if (env.containerId != '') {
+                                echo "Stopping and removing container running on ${port}"
+                                bat "docker stop $env.containerId"
+                                bat "docker rm $env.containerId"
+                            } else {
+                                echo "No container running on ${port}  port."
+                            }
+                        }
                     },
-                    PushtoDockerHub:{
+                    PushtoDockerHub: {
                         withDockerRegistry(credentialsId: 'DockerHub', url: '') {
                             bat "docker push ${registry}:$BUILD_NUMBER"
                             bat "docker push ${registry}:latest"
@@ -95,15 +95,14 @@ pipeline {
         stage('Docker deployment') {
             steps {
                 script {
-                        bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
-                    }
+                    bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
                 }
             }
         }
-        stage('Kubernetes Deployment') {
-            steps {
-                bat "kubectl apply -f deployment.yaml"
-            }
+    }
+    stage('Kubernetes Deployment') {
+        steps {
+            bat "kubectl apply -f deployment.yaml"
         }
     }
 }
