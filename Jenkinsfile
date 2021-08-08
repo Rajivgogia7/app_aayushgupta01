@@ -4,6 +4,11 @@ pipeline {
         scannerHome = tool name: 'sonar_scanner_dotnet'
         username = 'aayushgupta01'
         registry = 'aayushgup10/nagpdevopsassignment'
+	if (env.BRANCH_NAME == 'master') {
+		env.docker_port = 7200
+	} else {
+		env.docker_port = 7300
+	}
     }
     tools {
         msbuild 'MSBuild'
@@ -47,6 +52,14 @@ pipeline {
                 }
             }
         }
+	stage('Release artifact') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                bat 'dotnet publish -c Release'
+            }
+        }
         stage('Docker image') {
             steps {
                 bat "docker build -t i-${username}-$env.BRANCH_NAME ."
@@ -58,18 +71,17 @@ pipeline {
         stage('Containers') {
             steps {
                 parallel(
-                    PrecontainerCheck:{
-                        bat'''
-                        ffor /f %%i in ('docker ps -f "publish=7300" -q') do set containerId=%%i
-                        echo %containerId%
-                        If NOT "%containerId%" == "" (
-					docker stop %containerId%
-					docker rm -f %containerId%
-				)
-				ELSE(
-					echo "Container is not running on 7300"
-				)
-                        '''
+                    "Precontainer Check":{
+			    script {
+				env.containerId = bat(script:"docker ps -f publish=${port} -q", returnStdout: true).trim().readLines().drop(1).join('')
+				if (env.containerId != '') {
+					echo "Stopping and removing container running on ${port}"
+				    bat "docker stop $env.containerId" 
+				    bat "docker rm $env.containerId"
+				} else {
+					echo "No container running on ${port}  port."
+				}
+			    }
                     },
                     PushtoDockerHub:{
                         withDockerRegistry(credentialsId: 'DockerHub', url: '') {
