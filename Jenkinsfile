@@ -25,7 +25,8 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('Test_Sonar') {
-                    bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-${username} /n:sonar-${username} /v:1.0"
+                    //bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 -d:sonar.cs.opencover.reportsPaths='XUnitTestProject1/TestResults/*/coverage.*.xml' -d:sonar.cs.xunit.reportsPaths='XUnitTestProject1/TestResults/devopsassignmenttestoutput.xml'"
+                    bat "${scannerHome}/SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 /d:sonar.cs.opencover.reportsPaths=XUnitTestProject1/coverage.opencover.xml /d:sonar.coverage.exclusions='**Test*.cs'"
                 }
             }
 
@@ -34,7 +35,8 @@ pipeline {
             steps {
                 bat 'dotnet clean'
                 bat 'dotnet build -c Release -o DevopsWebApp/app/build'
-                bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
+                //bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
+                bat 'dotnet test XUnitTestProject1\\XUnitTestProject1.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=opencover'
             }
         }
         stage('stop sonarqube analysis') {
