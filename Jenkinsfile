@@ -3,7 +3,7 @@ pipeline {
     environment {
         scannerHome = tool name: 'sonar_scanner_dotnet'
         username = 'aayushgupta01'
-        registry = 'aayushgup10/nagpdevopsassignment'
+        registry = 'aayushgup10/'
     }
     tools {
         msbuild 'MSBuild'
@@ -59,8 +59,8 @@ pipeline {
         stage('Docker image') {
             steps {
                 bat "docker build -t i-${username}-$env.BRANCH_NAME ."
-                bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}:$BUILD_NUMBER"
-                bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}:latest"
+                bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}-env.BRANCH_NAME:$BUILD_NUMBER"
+                bat "docker tag i-${username}-$env.BRANCH_NAME ${registry}-env.BRANCH_NAME:latest"
             }
 
         }
@@ -86,8 +86,8 @@ pipeline {
                     },
                     PushtoDockerHub: {
                         withDockerRegistry(credentialsId: 'DockerHub', url: '') {
-                            bat "docker push ${registry}:$BUILD_NUMBER"
-                            bat "docker push ${registry}:latest"
+                            bat "docker push ${registry}-env.BRANCH_NAME:$BUILD_NUMBER"
+                            bat "docker push ${registry}-env.BRANCH_NAME:latest"
                         }
                     }
                 )
@@ -96,13 +96,13 @@ pipeline {
         stage('Docker deployment') {
             steps {
                 script {
-                    bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
+                    bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}-env.BRANCH_NAME:latest"
                 }
             }
         }
         stage('Kubernetes Deployment') {
             steps {
-                bat "kubectl apply -f deployment.yaml"
+                bat "kubectl apply -f deployment.yaml --namespace=kubernetes-cluster-${username}"
             }
         }
     }
