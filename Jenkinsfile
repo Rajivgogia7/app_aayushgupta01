@@ -4,11 +4,6 @@ pipeline {
         scannerHome = tool name: 'sonar_scanner_dotnet'
         username = 'aayushgupta01'
         registry = 'aayushgup10/nagpdevopsassignment'
-	if (env.BRANCH_NAME == 'master') {
-		env.docker_port = 7200
-	} else {
-		env.docker_port = 7300
-	}
     }
     tools {
         msbuild 'MSBuild'
@@ -73,6 +68,11 @@ pipeline {
                 parallel(
                     "Precontainer Check":{
 			    script {
+				if (env.BRANCH_NAME == 'master') {
+					env.port = 7200
+				} else {
+					env.port = 7300
+				}
 				env.containerId = bat(script:"docker ps -f publish=${port} -q", returnStdout: true).trim().readLines().drop(1).join('')
 				if (env.containerId != '') {
 					echo "Stopping and removing container running on ${port}"
@@ -95,10 +95,7 @@ pipeline {
         stage('Docker deployment') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
-                        bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p 7200:80 ${registry}:latest"
-                    } else if (env.BRANCH_NAME == 'develop') {
-                        bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p 7300:80 ${registry}:latest"
+                        bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
                     }
                 }
             }
