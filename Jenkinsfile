@@ -25,7 +25,9 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('Test_Sonar') {
-                    bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 -d:sonar.cs.opencover.reportsPaths='XUnitTestProject1/TestResults/*/coverage.*.xml' -d:sonar.cs.xunit.reportsPaths='XUnitTestProject1/TestResults/devopsassignmenttestoutput.xml'"
+                    bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 -d:sonar.cs.cobertura.reportsPaths=XUnitTestProject1/TestResults/*/coverage.cobertura.xml -d:sonar.cs.xunit.reportsPaths=XUnitTestProject1/TestResults/devopsassignmenttestoutput.xml"
+                    //bat "${scannerHome}/SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 /d:sonar.cs.opencover.reportsPaths=XUnitTestProject1/coverage.opencover.xml /d:sonar.coverage.exclusions='**Test*.cs'"
+           
                 }
             }
 
@@ -34,7 +36,8 @@ pipeline {
             steps {
                 bat 'dotnet clean'
                 bat 'dotnet build -c Release -o DevopsWebApp/app/build'
-                bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
+                //bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" -l:trx;LogFileName=devopsassignmenttestoutput.xml'
+                bat 'dotnet test XUnitTestProject1/XUnitTestProject1.csproj --collect="XPlat Code Coverage" /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura -l:trx;LogFileName=devopsassignmenttestoutput.xml'
             }
         }
         stage('stop sonarqube analysis') {
@@ -47,6 +50,14 @@ pipeline {
                 }
             }
         }
+        stage('Release artifact') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                bat 'dotnet publish -c Release'
+            }
+        }
         stage('Docker image') {
             steps {
                 bat "docker build -t i-${username}-$env.BRANCH_NAME ."
@@ -55,22 +66,39 @@ pipeline {
             }
 
         }
-        stage('Publish to docker hub') {
+        stage('Containers') {
             steps {
-                withDockerRegistry(credentialsId: 'DockerHub', url: '') {
-                    bat "docker push ${registry}:$BUILD_NUMBER"
-                    bat "docker push ${registry}:latest"
-                }
+                parallel(
+                    "Precontainer Check": {
+                        script {
+                            if (env.BRANCH_NAME == 'master') {
+                                env.port = 7200
+                            } else {
+                                env.port = 7300
+                            }
+                            env.containerId = bat(script: "docker ps -f publish=${port} -q", returnStdout: true).trim().readLines().drop(1).join('')
+                            if (env.containerId != '') {
+                                echo "Stopping and removing container running on ${port}"
+                                bat "docker stop $env.containerId"
+                                bat "docker rm $env.containerId"
+                            } else {
+                                echo "No container running on ${port}  port."
+                            }
+                        }
+                    },
+                    PushtoDockerHub: {
+                        withDockerRegistry(credentialsId: 'DockerHub', url: '') {
+                            bat "docker push ${registry}:$BUILD_NUMBER"
+                            bat "docker push ${registry}:latest"
+                        }
+                    }
+                )
             }
         }
         stage('Docker deployment') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'master') {
-                        bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p 7200:80 ${registry}:latest"
-                    } else if (env.BRANCH_NAME == 'develop') {
-                        bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p 7300:80 ${registry}:latest"
-                    }
+                    bat "docker run --name c-${username}-$env.BRANCH_NAME -d -p  ${port}:80 ${registry}:latest"
                 }
             }
         }
