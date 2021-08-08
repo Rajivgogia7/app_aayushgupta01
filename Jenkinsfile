@@ -25,7 +25,7 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('Test_Sonar') {
-                    bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 -d:sonar.cs.opencover.reportsPaths='XUnitTestProject1/TestResults/*/coverage.*.xml' -d:sonar.cs.xunit.reportsPaths='XUnitTestProject1/TestResults/devopsassignmenttestoutput.xml'"
+                    bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-${username} /n:sonar-${username} /v:1.0"
                 }
             }
 
