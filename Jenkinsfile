@@ -5,13 +5,10 @@ pipeline {
         username = 'aayushgupta01'
         registry = 'aayushgup10/'
     }
-    tools {
-        msbuild 'MSBuild'
-    }
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/Aayush-gupta10/app_aayushgupta01.git'
+                git url: 'https://github.com/Rajivgogia7/app_aayushgupta01'
             }
         }
         stage('nuget restore') {
@@ -25,7 +22,7 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('Test_Sonar') {
-                    bat "${scannerHome}\\SonarScanner.MSBuild.exe begin /k:sonar-aayushgupta01 -d:sonar.cs.opencover.reportsPaths=XUnitTestProject1/coverage.opencover.xml -d:sonar.cs.xunit.reportsPaths='XUnitTestProject1/TestResults/devopsassignmenttestoutput.xml'"
+                    bat "dotnet ${scannerHome}\\SonarScanner.MSBuild.dll begin /k:sonar-aayushgupta01 -d:sonar.cs.opencover.reportsPaths=XUnitTestProject1/coverage.opencover.xml -d:sonar.cs.xunit.reportsPaths='XUnitTestProject1/TestResults/devopsassignmenttestoutput.xml'"
            
                 }
             }
@@ -44,7 +41,7 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('Test_Sonar') {
-                    bat "${scannerHome}\\SonarScanner.MSBuild.exe end"
+                    bat "dotnet ${scannerHome}\\SonarScanner.MSBuild.dll end"
                 }
             }
         }
