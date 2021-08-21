@@ -5,13 +5,10 @@ pipeline {
         username = 'aayushgupta01'
         registry = 'aayushgup10/'
     }
-    tools {
-        msbuild 'MSBuild'
-    }
-    stages {
+     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/Aayush-gupta10/app_aayushgupta01.git'
+                git url: 'https://github.com/Rajivgogia7/app_aayushgupta01'
             }
         }
         stage('nuget restore') {
